@@ -216,6 +216,42 @@ void howmuchElapsedTime(char *inputTime, char *flag) {
         return;
     }
 
+    // Validate date
+    int day = tm_time.tm_mday;
+    int month = tm_time.tm_mon + 1; // tm_mon is 0-based
+    int year = tm_time.tm_year + 1900; // tm_year is years since 1900
+    int valid = 1;
+
+    // Check month range
+    if (month < 1 || month > 12) {
+        valid = 0;
+    } else {
+        // Calculate maximum days for the month
+        int max_days;
+        if (month == 2) { // February
+            // Check for leap year
+            if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+                max_days = 29;
+            } else {
+                max_days = 28;
+            }
+        } else if (month == 4 || month == 6 || month == 9 || month == 11) {
+            max_days = 30; // April, June, September, November
+        } else {
+            max_days = 31; // January, March, May, July, August, October, December
+        }
+
+        // Check day range
+        if (day < 1 || day > max_days) {
+            valid = 0;
+        }
+    }
+
+    if (!valid) {
+        fprintf(stderr, "Invalid date: %s. Please enter a valid date.\n", inputTime);
+        return;
+    }
+
     elapsedTime = mktime(&tm_time);
     if (elapsedTime == -1) {
         fprintf(stderr, "Failed to convert date to time.\n");
@@ -228,16 +264,22 @@ void howmuchElapsedTime(char *inputTime, char *flag) {
         return;
     }
 
+    // Check if date is in the future
+    if (difftime(currentTime, elapsedTime) < 0) {
+        fprintf(stderr, "Error: Cannot calculate time for future dates.\n");
+        return;
+    }
+
     seconds = difftime(currentTime, elapsedTime);
 
     if (strcmp(flag, "-s") == 0) {
-        printf("Time passed: %.0f seconds\n", fabs(seconds));
+        printf("Time passed: %.0f seconds\n", seconds);
     } else if (strcmp(flag, "-m") == 0) {
-        printf("Time passed: %.0f minutes\n", fabs(seconds / 60));
+        printf("Time passed: %.0f minutes\n", seconds / 60);
     } else if (strcmp(flag, "-h") == 0) {
-        printf("Time passed: %.0f hours\n", fabs(seconds / 3600));
+        printf("Time passed: %.0f hours\n", seconds / 3600);
     } else if (strcmp(flag, "-y") == 0) {
-        printf("Time passed: %.0f years\n", fabs(seconds / (3600 * 24 * 365.25)));
+        printf("Time passed: %.0f years\n", seconds / (3600 * 24 * 365.25));
     } else {
         fprintf(stderr, "Unknown flag.\n");
     }
